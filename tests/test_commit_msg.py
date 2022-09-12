@@ -4,6 +4,19 @@ import pytest
 from hooks import commit_msg
 
 
+LONG_MERGE_COMMIT = """Merge branch 'key-1' into main
+#
+# It looks like you may be committing a merge.
+# If this is not correct, please run
+#       git update-ref -d MERGE_HEAD
+# and try again.
+
+
+# Please enter the commit message for your changes. Lines starting
+# with '#' will be ignored, and an empty message aborts the commit.
+#"""
+
+
 @pytest.mark.parametrize(
     ("commit_message", "exit_code"),
     [
@@ -22,6 +35,13 @@ from hooks import commit_msg
         ("style: Any colour you like", 0),
         ("refactor: Refactor some code", 0),
         ("test: All the tests", 0),
+        (
+            # A merge commit message which is longer than 72 chars (and not
+            # conventional).
+            "Merge branch 'key-123456789/really-very-long-branch-name' into "
+            "'key-987654321/another-long-one'",
+            0,
+        ),
         # Subject and body - success
         (
             "feat: Implement complex thing.\n\n"
@@ -32,6 +52,10 @@ from hooks import commit_msg
             "feat: Implement a reallycomplex thing.\n\n"
             "So we need even more information to explain things, and ensure "
             "that readers of\nthe commit history understand what we've done.",
+            0,
+        ),
+        (  # Example of a merge commit with lots of commented out lines
+            LONG_MERGE_COMMIT,
             0,
         ),
         # Just subject line - failure

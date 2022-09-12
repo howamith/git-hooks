@@ -25,16 +25,28 @@ class CommitMessageValidator(ABC):
         Raises:
             InvalidCommitMessage: If the commit message is invalid.
         """
+        # Remove any commented out lines from the message.
+        message = "\n".join(
+            [m for m in message.split("\n") if not m.startswith("#")]
+        )
+
         # Split out the message into subject and body - which will be separated
         # by a double newline.
         parts = message.split("\n\n")
         subject, body = parts[0], parts[1] if len(parts) > 1 else None
 
-        self._validate_subject_and_body(subject, body)
+        # Detect if this is a commit message for a merge commit. Note that this
+        # is a little hacky, but if we want to explicitly detect merge commits
+        # then we'd have to use the `prepare-commit-msg` hook to do this and
+        # somehow propogate that through to this hook, which is a lot more work
+        # then accounting for merges here.
+        is_merge = subject.startswith("Merge ")
+
+        self._validate_subject_and_body(subject, body, is_merge)
 
     @abstractmethod
     def _validate_subject_and_body(
-        self, subject: str, body: Optional[str]
+        self, subject: str, body: Optional[str], is_merge: bool
     ) -> None:
         """Validate a commit message's subject and body.
 
@@ -44,6 +56,7 @@ class CommitMessageValidator(ABC):
         Args:
             subject: The subject of the commit message to validate.
             body: The body of the commit message to validate.
+            is_merge: Whether or not this is a merge commit.
 
         Raises:
             InvalidCommitMessage: If the commit message is invalid.
@@ -55,7 +68,7 @@ class CommitMessageLengthValidator(CommitMessageValidator):
     """`CommitMessageValidator` that checks commit messages length."""
 
     def _validate_subject_and_body(
-        self, subject: str, body: Optional[str]
+        self, subject: str, body: Optional[str], is_merge: bool
     ) -> None:
         """Validate a commit message's subject and body.
 
@@ -65,15 +78,17 @@ class CommitMessageLengthValidator(CommitMessageValidator):
         Args:
             subject: The subject of the commit message to validate.
             body: The body of the commit message to validate.
+            is_merge: Whether or not this is a merge commit.
 
         Raises:
             InvalidCommitMessage: If the commit message is invalid.
         """
-        self._validate_length(
-            text=subject,
-            max_len=72,
-            desc="Commit message" if not body else "Subject line",
-        )
+        if not is_merge:
+            self._validate_length(
+                text=subject,
+                max_len=72,
+                desc="Commit message" if not body else "Subject line",
+            )
 
         if body:
             # No hard-and-fast rule for the body, but each line should be
@@ -120,7 +135,7 @@ class ConventionCommitMessageValidator(CommitMessageValidator):
     ]
 
     def _validate_subject_and_body(
-        self, subject: str, body: Optional[str]
+        self, subject: str, body: Optional[str], is_merge: bool
     ) -> None:
         """Validate a commit message's subject and body.
 
@@ -130,10 +145,15 @@ class ConventionCommitMessageValidator(CommitMessageValidator):
         Args:
             subject: The subject of the commit message to validate.
             body: The body of the commit message to validate.
+            is_merge: Whether or not this is a merge commit.
 
         Raises:
             InvalidCommitMessage: If the commit message is invalid.
         """
+        # Merge commits don't need to follow the conventional commits spec.
+        if is_merge:
+            return
+
         for ct in self.CONVENTION_TYPES:
             if subject.startswith(f"{ct}:"):
                 return
