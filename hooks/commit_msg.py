@@ -4,7 +4,7 @@
 """commit-msg Git hook script."""
 from abc import ABC, abstractmethod
 import sys
-from typing import Optional, Type
+from typing import List, Optional, Type
 
 
 class InvalidCommitMessage(Exception):
@@ -153,7 +153,7 @@ def get_commit_message() -> str:
 
 
 def validate_commit_message(
-    message: str, validators: list[Type[CommitMessageValidator]]
+    message: str, validators: List[Type[CommitMessageValidator]]
 ) -> None:
     """Validate a commit message.
 
