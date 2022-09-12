@@ -14,7 +14,7 @@ The currently available hooks are:
   and do not break the 72:80/line length rule.
 
 
-# Installing a hook
+## Installing a hook
 
 To install a hook simply run `make install` with the name of the hook you want
 to install passed as a variable set to `true`, along with a `dest` variable set
@@ -32,3 +32,29 @@ _this_ repository, to `/path/to/repo/.git/hooks/commit-msg`.
 
 Note that if you want to simply install **all** of the available hooks then you
 can do `make install all=true dest=/path/to/repo`
+
+
+## Testing hooks
+
+Hooks will be tested on all pushes to `main`, however these tests can also be
+run locally.
+
+To install everything that's required to run the tests, there is a `venv` `make`
+command that creates a virtual Python environment and installs everything that's
+required in there. After this you can source that `venv` and run the tests:
+
+```shell
+make venv
+. venv/bin/activate
+make tests
+```
+
+Note that you can run a particular type of test in isolation, rather than
+running them all at once should you want too - these are available as the
+following `make` commands, with the underlying tests used corresponding to the
+command name:
+
+* `flake8`
+* `black`
+* `mypy`
+* `pytest`
