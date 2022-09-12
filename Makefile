@@ -17,16 +17,13 @@ venv:
 test: flake8 black mypy pytest
 
 flake8:
-	@( \
-		. venv/bin/activate \
-		&& flake8 --ignore=E203 --docstring-convention google hooks tests \
-	)
+	@flake8 --ignore=E203 --docstring-convention google hooks tests
 
 black:
-	@(. venv/bin/activate && black --line-length 79 --check hooks tests)
+	@black --line-length 79 --check hooks tests
 
 mypy:
-	@(. venv/bin/activate && mypy --ignore-missing-imports hooks tests)
+	@mypy --ignore-missing-imports hooks tests
 
 pytest:
-	@(. venv/bin/activate && pytest -vv --failed-first --durations=10 $(test))
+	@pytest -vv --failed-first --durations=10 $(test)
